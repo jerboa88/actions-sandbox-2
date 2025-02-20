@@ -1,0 +1,43 @@
+{
+	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+	"files": {
+		"ignore": [
+			"node_modules/**/*",
+			"public/**/*",
+			"plugins/**/*",
+			".cache/**/*",
+			".*"
+		]
+	},
+	"organizeImports": {
+		"enabled": true
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"all": true,
+			"correctness": {
+				"noUnusedImports": {
+					"level": "warn",
+					"fix": "none"
+				},
+				"noNodejsModules": "off"
+			},
+			"style": {
+				"noImplicitBoolean": "off"
+			},
+			"suspicious": {
+				"noReactSpecificProps": "off",
+				"noConsole": "off"
+			}
+		}
+	},
+	"javascript": {
+		"jsxRuntime": "transparent",
+		"formatter": {
+			"quoteStyle": "single"
+		},
+		"globals": []
+	},
+	"overrides": []
+}

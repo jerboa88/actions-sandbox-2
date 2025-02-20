@@ -1,0 +1,95 @@
+{% extends "./layouts/README.md.njk" %}
+
+{# {% block test %}
+TEST
+{% endblock %} #}
+
+{% block about %}
+This plugin was inspired by similar plugins for generating [Open Graph] images like [gatsby-plugin-open-graph-images], [gatsby-plugin-satorare], and [gatsby-remark-twitter-cards], but is designed to easier to use and more customizable so that it can be used for more than just generating social images.
+{% endblock %}
+
+{% block features %}
+- **🚀 Works with any [React] component** : Generate images from any valid React component
+	- Pass data to the component to customize the content, style, or layout of the generated images per page
+	- Not limited by available plugin options like [gatsby-remark-twitter-cards]
+	- Not limited by types of JSX elements or CSS properties supported by the plugin like [gatsby-plugin-satorare]
+- **📷 Configurable output filetypes**: Generate PNG, JPEG, or WebP images, as well as PDFs
+	- Set the quality of the generated images
+	- Optimize images for speed or file size
+- **📂 Customizable output paths**: Full control over paths of the generated pages and images
+	- Set the path of the generated pages so that you can exclude them from your sitemap, or reuse them for other purposes
+	- Save images to a separate directory
+- **🎛️ Default options**: Reuse the same options for multiple images
+	- Set default options when adding the plugin to `gatsby-config.js`
+	- Call the `setDefaultOptions()` function in `gatsby-node.js` to set them programmatically
+{% endblock %}
+
+{# {% block features %}
+### Use cases
+- **🏞️ Social images**: Use your existing React components to generate Open Graph images and/or Twitter cards for your blog posts or other content
+- **🖼️ Favicons**: Dynamically generate favicons for your website
+- **📄 Documents**: Create PDF files for reports, invoices, resumes, or other documents
+
+### How it works
+1. When you call the `createImage()` function from `gatsby-node.js`, we save the options for that image/PDF and generate a regular [Gatsby] page from the component you provided.
+2. When the page is built, we use [Puppeteer] to render the page in a headless browser and, using the options you provided, either:
+   1. save a screenshot of the rendered component as an image, or
+   2. print the page to a PDF file
+{% endblock %} #}
+
+{# {% block screenshots %}{% endblock %} #}
+
+{# {% block aboutMore %}{% endblock %} #}
+
+{% block gettingStarted %}
+## Installation
+1. Install the plugin with your favorite package manager:
+
+	```sh
+	npm install jerboa88/gatsby-plugin-component-to-image		# npm
+	```
+
+	```sh
+	yarn add jerboa88/gatsby-plugin-component-to-image		# yarn
+	```
+
+	```sh
+	pnpm add jerboa88/gatsby-plugin-component-to-image		# pnpm
+	```
+
+	```sh
+	bun add github:jerboa88/gatsby-plugin-component-to-image	# bun
+	```
+
+2. Add the plugin to your `gatsby-config.js` file:
+	```js
+	// gatsby-config.js
+
+	module.exports = {
+		plugins: [
+			'gatsby-plugin-component-to-image',
+		],
+	}
+	```
+
+	You can also set default options for the plugin here:
+	```js
+	// gatsby-config.js
+
+	module.exports = {
+		plugins: [
+			{
+				resolve: 'gatsby-plugin-component-to-image',
+				options: {
+					type: 'jpeg',
+					quality: 95,
+				},
+			},
+		],
+	}
+	```
+{% endblock %}
+
+{% block right %}
+This is the right side!
+{% endblock %}

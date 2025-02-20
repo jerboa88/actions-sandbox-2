@@ -1,0 +1,11 @@
+{# Render a prefix along with the block content if the block content is not empty #}
+{%- macro ifBlock(prefix) -%}
+{% set blockContent %}
+{{ caller() }}
+{% endset %}
+
+{%- if blockContent | trim -%}
+{{- prefix }}
+{{- blockContent }}
+{%- endif -%}
+{%- endmacro -%}

@@ -1,0 +1,92 @@
+{% from "../utils/utils.njk" import ifBlock %}
+
+
+<!-- Project Header -->
+<div align="center">
+  {%- if logo %}
+  <img class="projectLogo" src="{{- project.logo -}}" alt="Project logo" title="Project logo" width="256">
+  {%- endif %}
+
+  <h1 class="projectName">
+    {{- project.name -}}
+  </h1>
+
+  <p class="projectBadges">
+    {%- include "../partials/badges-common.md.njk" -%}
+    {%- include "../partials/badges-extension.md.njk" -%}
+  </p>
+
+  <p class="projectDesc">
+    {{- project.description.long -}}
+  </p>
+
+  <br/>
+</div>
+
+
+# {{ project.name }}
+
+## About
+{% block about %}
+{{ assertUnreachable }}
+{% endblock -%}
+
+{%- call ifBlock('### Features') -%}
+{% block features %}{% endblock %}
+{%- endcall -%}
+
+{%- call ifBlock('### Screenshots') -%}
+{% block screenshots %}{% endblock %}
+{%- endcall -%}
+
+{% block gettingStarted %}
+This is the default content
+{% endblock %}
+
+<section class="left">
+  {% block left %}{% endblock %}
+</section>
+
+<section class="right">
+  {% block right %}
+  This is more content
+  {% endblock %}
+</section>
+
+## Getting Started
+...
+
+### Prerequisites
+...
+
+### Installation
+...
+
+
+## Usage
+...
+
+
+## Contributing
+${if(is.open-to-contributions)}
+Contributions, issues, and forks are welcome. [SemVer](http://semver.org/) is used for versioning.
+${else}
+This project is not open to code contributions, but feedback and bug reports are always welcome! Feel free to fork the project and add your own features.
+${endif}
+
+${if(licenseName)}
+## License
+This project is licensed under the ${licenseName}. See [${licenseFileName/last}](${licenseFileName/last}) for details.
+${endif}
+
+
+$-- TODO: Use repo owner from context
+$-- TODO: Use repo name from context
+$-- TODO: Use repo url from context
+$-- TODO:
+
+${name}
+${name2}
+${description.long}
+${category}
+${repository.allow_forking}
