@@ -5,7 +5,7 @@ import {
 	loadJsonEnvVar,
 	loadJsonFile,
 	setLogLevel,
-} from './utils.js';
+} from './utils.mjs';
 
 function loadData(
 	projectDataPath,
