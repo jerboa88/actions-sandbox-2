@@ -15,20 +15,23 @@ function loadData(
 ) {
 	const projectData = loadJsonFile(projectDataPath);
 	const repoData = loadJsonEnvVar(repoDataEnvName);
-	const ownerData = loadJsonEnvVar(repoOwnerDataEnvName);
-	const repoReleaseData = loadJsonEnvVar(repoReleaseDataEnvName);
-	const vulRepData = loadJsonEnvVar(repoVulRepDataEnvName);
+	const repoOwnerData = loadJsonEnvVar(repoOwnerDataEnvName);
+	const repoLatestReleaseData = loadJsonEnvVar(repoReleaseDataEnvName);
+	const repoVulRepData = loadJsonEnvVar(repoVulRepDataEnvName);
 
 	return {
 		project: projectData,
 		repo: {
 			...repoData,
+			owner: {
+				...repoData.owner,
+				...repoOwnerData,
+			}
 			year_created_at: new Date(repoData.created_at).getFullYear(),
 			year_updated_at: new Date(repoData.updated_at).getFullYear(),
-			vulnerability_reporting_enabled: vulRepData.enabled,
-			latest_release: repoReleaseData,
+			vulnerability_reporting_enabled: repoVulRepData.enabled,
+			latest_release: repoLatestReleaseData,
 		},
-		owner: ownerData,
 	};
 }
 
@@ -44,7 +47,7 @@ function main() {
 
 	const jsonData = JSON.stringify(loadData(...args));
 
-	process.stdout.write(jsonData);
+	console.info(jsonData);
 
 	return jsonData;
 }
