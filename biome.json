@@ -3,8 +3,6 @@
 	"files": {
 		"ignore": [
 			"node_modules/**/*",
-			"public/**/*",
-			"plugins/**/*",
 			".cache/**/*",
 			".*"
 		]
@@ -24,20 +22,16 @@
 				"noNodejsModules": "off"
 			},
 			"style": {
-				"noImplicitBoolean": "off"
+				"useNamingConvention": "off"
 			},
 			"suspicious": {
-				"noReactSpecificProps": "off",
 				"noConsole": "off"
 			}
 		}
 	},
 	"javascript": {
-		"jsxRuntime": "transparent",
 		"formatter": {
 			"quoteStyle": "single"
-		},
-		"globals": []
-	},
-	"overrides": []
+		}
+	}
 }
