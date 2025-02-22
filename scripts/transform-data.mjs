@@ -26,7 +26,7 @@ function loadData(
 			owner: {
 				...repoData.owner,
 				...repoOwnerData,
-			}
+			},
 			year_created_at: new Date(repoData.created_at).getFullYear(),
 			year_updated_at: new Date(repoData.updated_at).getFullYear(),
 			vulnerability_reporting_enabled: repoVulRepData.enabled,
