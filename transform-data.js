@@ -34,7 +34,7 @@ function loadData(
 }
 
 function main() {
-	setLogLevel(LOG_LEVEL.ERROR);
+	setLogLevel(LOG_LEVEL.error);
 
 	const dirName = dirname(fileURLToPath(import.meta.url));
 	const jsonData = JSON.stringify(
