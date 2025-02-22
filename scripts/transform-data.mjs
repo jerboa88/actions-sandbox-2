@@ -1,7 +1,6 @@
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import {
 	LOG_LEVEL,
+	panic,
 	loadJsonEnvVar,
 	loadJsonFile,
 	setLogLevel,
@@ -9,16 +8,16 @@ import {
 
 function loadData(
 	projectDataPath,
-	repoDataName,
-	repoOwnerDataName,
-	repoReleaseDataName,
-	repoVulRepDataName,
+	repoDataEnvName,
+	repoOwnerDataEnvName,
+	repoReleaseDataEnvName,
+	repoVulRepDataEnvName,
 ) {
 	const projectData = loadJsonFile(projectDataPath);
-	const repoData = loadJsonEnvVar(repoDataName);
-	const ownerData = loadJsonEnvVar(repoOwnerDataName);
-	const repoReleaseData = loadJsonEnvVar(repoReleaseDataName);
-	const vulRepData = loadJsonEnvVar(repoVulRepDataName);
+	const repoData = loadJsonEnvVar(repoDataEnvName);
+	const ownerData = loadJsonEnvVar(repoOwnerDataEnvName);
+	const repoReleaseData = loadJsonEnvVar(repoReleaseDataEnvName);
+	const vulRepData = loadJsonEnvVar(repoVulRepDataEnvName);
 
 	return {
 		project: projectData,
@@ -36,16 +35,14 @@ function loadData(
 function main() {
 	setLogLevel(LOG_LEVEL.error);
 
-	const dirName = dirname(fileURLToPath(import.meta.url));
-	const jsonData = JSON.stringify(
-		loadData(
-			join(dirName, 'data', 'project.json'),
-			'REPO_DATA',
-			'REPO_OWNER_DATA',
-			'REPO_LATEST_RELEASE_DATA',
-			'REPO_VUL_REP_DATA',
-		),
-	);
+	const expectedNumOfArgs = 5;
+	const args = process.argv.slice(2);
+
+	if (args.length !== expectedNumOfArgs) {
+		panic(`Expected ${expectedNumOfArgs} arguments, got ${args.length}`);
+	}
+
+	const jsonData = JSON.stringify(loadData(...args));
 
 	process.stdout.write(jsonData);
 
