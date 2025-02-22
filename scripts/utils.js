@@ -1,7 +1,6 @@
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import console from 'node:console';
-import JSON5 from 'json5';
 
 const COLOR = {
 	blue: '\x1b[1;34m',
@@ -122,7 +121,7 @@ export function panic(e) {
  */
 export function loadJsonFile(path) {
 	return runTask(`Loading JSON from ${path}`, () =>
-		JSON5.parse(readFileSync(path, 'utf8')),
+		JSON.parse(readFileSync(path, 'utf8')),
 	);
 }
 
@@ -134,7 +133,7 @@ export function loadJsonFile(path) {
  */
 export function loadJsonEnvVar(name) {
 	return runTask(`Loading JSON from env.${name}`, () =>
-		JSON5.parse(process.env[name]),
+		JSON.parse(process.env[name]),
 	);
 }
 
