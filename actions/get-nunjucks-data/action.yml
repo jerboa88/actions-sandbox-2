@@ -35,9 +35,9 @@ runs:
       with:
         project-data-path: "${{ inputs.project-data-path }}"
         repo-data: "${{ toJson(github.event.repository) }}"
-        repo-owner-data: "${{ steps.owner.outputs.response }}"
-        repo-latest-release-data: "${{ steps.latest-release.outputs.response }}"
-        repo-vul-rep-data: "${{ steps.vul-rep.outputs.response }}"
+        repo-owner-data: "${{ toJson(steps.owner.outputs.response) }}"
+        repo-latest-release-data: "${{ toJson(steps.latest-release.outputs.response) }}"
+        repo-vul-rep-data: "${{ toJson(steps.vul-rep.outputs.response) }}"
 branding:
   icon: "bar-chart-2"
   color: green
