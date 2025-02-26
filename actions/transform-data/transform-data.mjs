@@ -7,7 +7,15 @@ function main() {
 		'repo-owner-data',
 		'repo-latest-release-data',
 		'repo-vul-rep-data',
-	].map((name) => process.env[`INPUT_${name.toUpperCase()}`]);
+	].map((name) => {
+		const value = process.env[`INPUT_${name.toUpperCase()}`];
+
+		if (!value) {
+			throw new Error(`Missing required input '${name}'`);
+		}
+
+		return value;
+	});
 	const projectDataString = readFileSync(projectDataPath, 'utf8');
 	const [
 		projectData,
@@ -19,7 +27,7 @@ function main() {
 		try {
 			return JSON.parse(dataString);
 		} catch (error) {
-			console.error(`Error parsing JSON value '${dataString}'`, error.stack);
+			console.error(`Error parsing JSON value '${dataString}'`);
 
 			throw error;
 		}
