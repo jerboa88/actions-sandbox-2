@@ -18,25 +18,25 @@ runs:
 
     - name: 📥 Fetch Repo Data (owner)
       id: owner
-      uses: ../fetch-from-github-api
+      uses: ./actions/fetch-from-github-api
       with:
         path: 'users/${{ github.repository_owner }}'
 
     - name: 📥 Fetch Repo Data (latest release)
       id: latest-release
-      uses: ../fetch-from-github-api
+      uses: ./actions/fetch-from-github-api
       with:
         path: 'repos/${{ github.repository }}/releases/latest'
 
     - name: 📥 Fetch Repo Data (private vulnerability reporting status)
       id: vul-rep
-      uses: ../fetch-from-github-api
+      uses: ./actions/fetch-from-github-api
       with:
         path: 'repos/${{ github.repository }}/private-vulnerability-reporting'
 
     - name: 🪄 Transform Data
       id: transform-data
-      uses: ../transform-data
+      uses: ./actions/transform-data
       with:
         project-data-path: ${{ inputs.project-data-path }}
         repo-data: ${{ toJson(github.event.repository) }}
