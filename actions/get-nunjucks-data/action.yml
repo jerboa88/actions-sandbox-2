@@ -24,19 +24,19 @@ runs:
 
     - name: 📥 Fetch Repo Data (latest release)
       id: latest-release
-      uses: ./actions/fetch-from-github-api
+      uses: jerboa88/actions-sandbox-2/actions/fetch-from-github-api@main
       with:
         path: 'repos/${{ github.repository }}/releases/latest'
 
     - name: 📥 Fetch Repo Data (private vulnerability reporting status)
       id: vul-rep
-      uses: ./actions/fetch-from-github-api
+      uses: jerboa88/actions-sandbox-2/actions/fetch-from-github-api@main
       with:
         path: 'repos/${{ github.repository }}/private-vulnerability-reporting'
 
     - name: 🪄 Transform Data
       id: transform-data
-      uses: ./actions/transform-data
+      uses: jerboa88/actions-sandbox-2/actions/transform-data@main
       with:
         project-data-path: ${{ inputs.project-data-path }}
         repo-data: ${{ toJson(github.event.repository) }}
