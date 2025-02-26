@@ -11,28 +11,23 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: 🛠️ Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
-
     - name: 📥 Fetch Repo Data (owner)
       id: owner
       uses: jerboa88/actions-sandbox-2/actions/fetch-from-github-api@main
       with:
-        path: 'users/${{ github.repository_owner }}'
+        path: "users/${{ github.repository_owner }}"
 
     - name: 📥 Fetch Repo Data (latest release)
       id: latest-release
       uses: jerboa88/actions-sandbox-2/actions/fetch-from-github-api@main
       with:
-        path: 'repos/${{ github.repository }}/releases/latest'
+        path: "repos/${{ github.repository }}/releases/latest"
 
     - name: 📥 Fetch Repo Data (private vulnerability reporting status)
       id: vul-rep
       uses: jerboa88/actions-sandbox-2/actions/fetch-from-github-api@main
       with:
-        path: 'repos/${{ github.repository }}/private-vulnerability-reporting'
+        path: "repos/${{ github.repository }}/private-vulnerability-reporting"
 
     - name: 🪄 Transform Data
       id: transform-data
@@ -44,5 +39,5 @@ runs:
         repo-latest-release-data: ${{ steps.latest-release.outputs.response }}
         repo-vul-rep-data: ${{ steps.vul-rep.outputs.response }}
 branding:
-  icon: 'bar-chart-2'
+  icon: "bar-chart-2"
   color: green
