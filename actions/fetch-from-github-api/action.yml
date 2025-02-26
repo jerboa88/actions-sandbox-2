@@ -17,7 +17,7 @@ runs:
       run: |
         {
           echo 'response<<EOF'
-          curl -s '${{ env.GITHUB_API_URL }}/${{ inputs.path }}'
+          curl -s '${{ github.api_url }}/${{ inputs.path }}'
           echo EOF
         } >> "$GITHUB_OUTPUT"
 branding:
