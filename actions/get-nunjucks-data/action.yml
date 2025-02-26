@@ -18,7 +18,7 @@ runs:
 
     - name: 📥 Fetch Repo Data (owner)
       id: owner
-      uses: ./actions/fetch-from-github-api
+      uses: jerboa88/actions-sandbox-2/actions/fetch-from-github-api@main
       with:
         path: 'users/${{ github.repository_owner }}'
 
