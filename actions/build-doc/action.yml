@@ -1,0 +1,40 @@
+name: 📝 Build Doc
+description: Render a Nunjucks template and write the output to a file
+inputs:
+  template-path:
+    description: The path to the template file
+    required: true
+  data:
+    description: The JSON data to pass to the template
+    required: true
+  output-path:
+    description: The path to the output file
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: '✍🏼 Render Template (${{ inputs.template-path }})'
+      id: render-template
+      uses: Lehoczky/render-nunjucks-template-action@v1.0.0
+      with:
+        template-path: ${{ inputs.template-path }}
+        vars: ${{ inputs.data }}
+
+    - name: 🔎 Get Output Directory
+      id: get-output-dir
+      shell: bash
+      run: echo "dir=$(dirname ${{ inputs.output-path }})" >> $GITHUB_OUTPUT
+
+    - name: '📂 Create Directories (${{ steps.get-output-dir.outputs.dir }})'
+      shell: bash
+      run: mkdir -p '${{ steps.get-output-dir.outputs.dir }}'
+
+    - name: '💾 Write Output to File (${{ inputs.output-path }})'
+      shell: bash
+      run: |
+        cat << EOF > ${{ inputs.output-path }}
+        ${{ steps.render-template.outputs.result }}
+        EOF
+branding:
+  icon: 'file-text'
+  color: green

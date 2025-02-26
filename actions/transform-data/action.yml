@@ -1,0 +1,25 @@
+name: 🪄 Transform Data
+description: Transform and combine the input data into a single JSON object for Nunjucks
+inputs:
+  project-data-path:
+    description: The path to a JSON file containing the project data
+    required: true
+  repo-owner-data:
+    description: The JSON data for the repository owner
+    required: true
+  repo-latest-release-data:
+    description: The JSON data for the repository's latest release
+    required: true
+  repo-vul-rep-data:
+    description: The JSON data for the repository's vulnerability reporting status
+    required: true
+outputs:
+  data:
+    description: The JSON data to pass to the template
+    value: ${{ steps.transform-data.outputs.data }}
+runs:
+  using: node20
+  main: transform-data.mjs
+branding:
+  icon: 'zap'
+  color: green

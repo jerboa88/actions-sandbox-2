@@ -1,0 +1,25 @@
+name: 📥 Fetch from GitHub API
+description: Calls the GitHub API and sets an environment variable with the response
+inputs:
+  path:
+    description: The path to fetch from the GitHub API
+    required: true
+outputs:
+  data:
+    description: The response from the GitHub API
+    value: ${{ steps.fetch.outputs.response }}
+runs:
+  using: composite
+  steps:
+    - name: '📥 Fetch from GitHub API (${{ inputs.path }} -> ${{ inputs.env-var-name }})'
+      id: fetch
+      shell: bash
+      run: |
+        {
+          echo 'response<<EOF'
+          curl -s '${{ env.GITHUB_API_URL }}/${{ inputs.path }}'
+          echo EOF
+        } >> "$GITHUB_OUTPUT"
+branding:
+  icon: 'download-cloud'
+  color: blue

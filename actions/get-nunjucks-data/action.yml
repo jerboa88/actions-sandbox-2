@@ -1,0 +1,48 @@
+name: 📊 Get Nunjucks Data
+description: Fetch, combine, and transform the data to pass to a Nunjucks template
+inputs:
+  project-data-path:
+    description: The path to a JSON file containing the project data
+    required: true
+outputs:
+  data:
+    description: The JSON data to pass to the template
+    value: ${{ steps.transform-data.outputs.data }}
+runs:
+  using: composite
+  steps:
+    - name: 🛠️ Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: 📥 Fetch Repo Data (owner)
+      id: owner
+      uses: ../fetch-from-github-api
+      with:
+        path: 'users/${{ github.repository_owner }}'
+
+    - name: 📥 Fetch Repo Data (latest release)
+      id: latest-release
+      uses: ../fetch-from-github-api
+      with:
+        path: 'repos/${{ github.repository }}/releases/latest'
+
+    - name: 📥 Fetch Repo Data (private vulnerability reporting status)
+      id: vul-rep
+      uses: ../fetch-from-github-api
+      with:
+        path: 'repos/${{ github.repository }}/private-vulnerability-reporting'
+
+    - name: 🪄 Transform Data
+      id: transform-data
+      uses: ../transform-data
+      with:
+        project-data-path: ${{ inputs.project-data-path }}
+        repo-data: ${{ toJson(github.event.repository) }}
+        repo-owner-data: ${{ steps.owner.outputs.response }}
+        repo-latest-release-data: ${{ steps.latest-release.outputs.response }}
+        repo-vul-rep-data: ${{ steps.vul-rep.outputs.response }}
+branding:
+  icon: 'bar-chart-2'
+  color: green
