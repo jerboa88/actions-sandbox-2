@@ -1,23 +1,29 @@
-import { readFileSync, appendFileSync } from "node:fs";
+import { readFileSync, appendFileSync } from 'node:fs';
 
 function main() {
 	const [projectDataPath, ...remainingDataStrings] = [
-		"project-data-path",
-		"repo-data",
-		"repo-owner-data",
-		"repo-latest-release-data",
-		"repo-vul-rep-data",
+		'project-data-path',
+		'repo-data',
+		'repo-owner-data',
+		'repo-latest-release-data',
+		'repo-vul-rep-data',
 	].map((name) => process.env[`INPUT_${name.toUpperCase()}`]);
-	const projectDataString = readFileSync(projectDataPath, "utf8");
+	const projectDataString = readFileSync(projectDataPath, 'utf8');
 	const [
 		projectData,
 		repoData,
 		repoOwnerData,
 		repoLatestReleaseData,
 		repoVulRepData,
-	] = [projectDataString, ...remainingDataStrings].map((dataString) =>
-		JSON.parse(dataString),
-	);
+	] = [projectDataString, ...remainingDataStrings].map((dataString) => {
+		try {
+			return JSON.parse(dataString);
+		} catch (error) {
+			console.error(`Error parsing JSON value '${dataString}'`, error.stack);
+
+			throw error;
+		}
+	});
 	const resultData = JSON.stringify({
 		project: projectData,
 		repo: {
