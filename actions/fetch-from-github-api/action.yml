@@ -5,7 +5,7 @@ inputs:
     description: The path to fetch from the GitHub API
     required: true
 outputs:
-  data:
+  response:
     description: The response from the GitHub API
     value: ${{ steps.fetch.outputs.response }}
 runs:
