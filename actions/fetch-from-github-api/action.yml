@@ -11,7 +11,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: "📥 Fetch from GitHub API (${{ inputs.path }} -> ${{ inputs.env-var-name }})"
+    - name: '📥 Fetch from GitHub API (${{ inputs.path }} -> ${{ inputs.env-var-name }})'
       id: fetch
       shell: bash
       run: |
@@ -21,5 +21,5 @@ runs:
           echo EOF
         } >> "$GITHUB_OUTPUT"
 branding:
-  icon: "download-cloud"
+  icon: 'download-cloud'
   color: blue

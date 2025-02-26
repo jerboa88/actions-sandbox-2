@@ -19,10 +19,10 @@ inputs:
 outputs:
   data:
     description: The JSON data to pass to the template
-    value: "${{ steps.transform-data.outputs.data }}"
+    value: ${{ steps.transform-data.outputs.data }}
 runs:
   using: node20
   main: transform-data.mjs
 branding:
-  icon: "zap"
+  icon: 'zap'
   color: green
