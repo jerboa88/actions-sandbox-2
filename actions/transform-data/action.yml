@@ -4,6 +4,9 @@ inputs:
   project-data-path:
     description: The path to a JSON file containing the project data
     required: true
+  repo-data:
+    description: The JSON data for the repository
+    required: true
   repo-owner-data:
     description: The JSON data for the repository owner
     required: true
