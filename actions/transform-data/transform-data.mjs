@@ -1,8 +1,9 @@
 import { readFileSync, appendFileSync } from 'node:fs';
 
 function toYear(tsOrDateString) {
-	const date =
+	const date = new Date(
 		typeof tsOrDateString === 'number' ? tsOrDateString * 1000 : tsOrDateString;
+	)
 
 	return date.getFullYear();
 }
