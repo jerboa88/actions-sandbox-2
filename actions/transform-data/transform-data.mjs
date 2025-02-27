@@ -40,7 +40,7 @@ function main() {
 				...repoData.owner,
 				...repoOwnerData,
 			},
-			year_created_at: new Date(repoData.created_at).getFullYear(),
+			year_created_at: new Date(repoData.created_at * 1000).getFullYear(),
 			year_updated_at: new Date(repoData.updated_at).getFullYear(),
 			vul_rep_enabled: repoVulRepData.enabled,
 			latest_release: repoLatestReleaseData,
