@@ -1,0 +1,9 @@
+{%- block license -%}
+{%- if project.license_name === 'MIT License' -%}
+{%- include '../partials/licenses/mit.njk' -%}
+{%- elif project.license_name === 'Mozilla Public License 2.0' -%}
+{%- include '../partials/licenses/mpl.njk' -%}
+{%- elif project.license_name === 'The Unlicense' -%}
+{%- include '../partials/licenses/unlicense.njk' -%}
+{%- endif -%}
+{%- endblock -%}
