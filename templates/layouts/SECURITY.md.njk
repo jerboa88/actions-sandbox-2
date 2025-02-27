@@ -1,0 +1,11 @@
+# 🛡️ Security Policy
+
+{% block security_policy -%}
+If you discover a critical security vulnerability, **do not** open an issue on GitHub.
+
+{% if repo.vul_rep_enabled -%}
+	Instead, please [report the vulnerability privately]({{- repo.html_url -}}/security) so I have an opportunity to fix the issue before it is publicly disclosed.
+{%- else -%}
+	Instead, please send me a message directly at [${contactUrl}](https://${contactUrl}) so I have an opportunity to fix the issue before it is publicly disclosed.
+{%- endif -%}
+{%- endblock -%}
