@@ -1,0 +1,19 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@dagger.io/dagger": "./sdk",
+    "lodash-es": "^4.17.21",
+    "nunjucks": "^3.2.4",
+    "typescript": "^5.5.4"
+  },
+  "devDependencies": {
+    "@octokit/rest": "^21.1.1",
+    "@octokit/types": "^13.8.0",
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^22.13.10",
+    "@types/nunjucks": "^3.2.6"
+  },
+  "dagger": {
+    "runtime": "bun"
+  }
+}

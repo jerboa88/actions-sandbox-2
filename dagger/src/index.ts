@@ -1,0 +1,464 @@
+import {
+	argument,
+	dag,
+	func,
+	object,
+	type Container,
+	type Directory,
+	type File,
+	type Secret,
+} from "@dagger.io/dagger";
+import { merge as _merge } from "lodash-es";
+import { join } from "node:path";
+import nunjucks, {
+	type Callback,
+	type ILoaderAsync,
+	type LoaderSource,
+} from "nunjucks";
+import { Octokit } from "@octokit/rest";
+import { base, dir, msg } from "./constants";
+import type {
+	GithubContextMatrix,
+	GithubDataPromiseMatrix,
+	InputPathMatrix,
+	NestedObject,
+	Nullable,
+	OutputPromiseMatrix,
+	PartialGithubContext,
+} from "./types";
+import {
+	getLatestRelease,
+	isDefined,
+	isBlank,
+	reshapeObject,
+	trim,
+} from "./utils";
+
+let nunjucksEnv: nunjucks.Environment;
+let nunjucksContext: NestedObject = {};
+let nunjucksConfig: nunjucks.ConfigureOptions = {};
+
+@object()
+export class ActionsSandbox3 {
+	private sourceDir?: Directory;
+	private defaultTemplatesDir?: Directory;
+	private token?: Secret;
+	private nunjucksContextMetadataKey = base.nunjucksContextMetadataKey.metadata;
+	private gitCommitterName = base.git.committerName;
+	private gitCommitterEmail = base.git.committerEmail;
+	private gitAuthorName = base.git.authorName;
+	private gitAuthorEmail = base.git.authorEmail;
+	private gitCommitMessage = base.git.commitMessage;
+
+	constructor(
+		sourceDir: Directory,
+		@argument({ ignore: [".git", ".github"] })
+		defaultTemplatesDir?: Directory,
+		token?: Secret,
+		nunjucksConfigJson?: string,
+		nunjucksContextMetadataKey?: string,
+	) {
+		this.sourceDir = sourceDir;
+
+		if (isDefined(nunjucksContextMetadataKey)) {
+			if (isBlank(nunjucksContextMetadataKey)) {
+				throw new Error(msg.invalid.nunjucksContextMetadataKey);
+			}
+
+			this.nunjucksContextMetadataKey = nunjucksContextMetadataKey;
+		}
+
+		if (defaultTemplatesDir) {
+			this.defaultTemplatesDir = defaultTemplatesDir;
+		}
+
+		if (token) {
+			this.token = token;
+		}
+
+		if (nunjucksConfigJson) {
+			nunjucksConfig = JSON.parse(nunjucksConfigJson);
+		}
+	}
+
+	private addToNunjucksContext(
+		obj: Nullable<NestedObject>,
+		outputKey?: string,
+		inputKey?: string,
+	) {
+		nunjucksContext = _merge(
+			nunjucksContext,
+			reshapeObject(obj, inputKey, outputKey),
+		);
+	}
+
+	private setNunjucksEnv(container: Container) {
+		const daggerLoader: ILoaderAsync = {
+			async: true,
+			getSource: async (
+				templatePath: string,
+				callback: Callback<Error, LoaderSource>,
+			) => {
+				try {
+					const file = container.file(templatePath);
+
+					callback(null, {
+						src: await file.contents(),
+						path: templatePath,
+						noCache: false,
+					});
+				} catch (error) {
+					callback(error as Error, null);
+				}
+			},
+		};
+
+		nunjucksEnv = new nunjucks.Environment(daggerLoader, nunjucksConfig);
+	}
+
+	private async getRemoteUrl(): Promise<string> {
+		return trim(
+			this.getBaseContainerWithGit()
+				.withExec(["git", "remote", "get-url", "origin"])
+				.stdout(),
+		);
+	}
+
+	private commit(container: Container): Container {
+		return container
+			.withExec([
+				"git",
+				"config",
+				"--global",
+				"user.name",
+				this.gitCommitterName,
+			])
+			.withExec([
+				"git",
+				"config",
+				"--global",
+				"user.email",
+				this.gitCommitterEmail,
+			])
+			.withExec([
+				"git",
+				"commit",
+				"--author",
+				`${this.gitAuthorName} <${this.gitAuthorEmail}>`,
+				"-m",
+				this.gitCommitMessage,
+			]);
+	}
+
+	private async renderTemplate(templatePath: string): Promise<string> {
+		return new Promise((resolve, reject) => {
+			this.addToNunjucksContext({
+				[this.nunjucksContextMetadataKey]: {
+					sourceDir: dir.source,
+					defaultTemplatesDir: dir.defaultTemplates,
+				},
+			});
+
+			nunjucksEnv.render(templatePath, nunjucksContext, (error, result) => {
+				if (error) {
+					reject(error);
+				} else {
+					resolve(result ?? "");
+				}
+			});
+		});
+	}
+
+	@func()
+	public async withNunjucksContext(
+		inputKey?: string,
+		outputKey?: string,
+		dataUrl?: string,
+		dataFile?: File,
+		dataJson?: string,
+	): Promise<ActionsSandbox3> {
+		if (dataUrl || dataFile || dataJson) {
+			const mergedObject: NestedObject = {
+				...(dataFile && JSON.parse(await dataFile.contents())),
+				...(dataUrl &&
+					JSON.parse(await fetch(dataUrl).then((response) => response.text()))),
+				...(dataJson && JSON.parse(dataJson)),
+			};
+
+			this.addToNunjucksContext(mergedObject, outputKey, inputKey);
+		} else {
+			console.warn(msg.missing.nunjucksContext);
+
+			nunjucksContext = {};
+		}
+
+		return this;
+	}
+
+	@func()
+	public async withNunjucksContextFromGithub(
+		repoOwner?: string,
+		repoName?: string,
+		apiBaseUrl?: string,
+		githubContextJson?: string,
+		envContextJson?: string,
+		varsContextJson?: string,
+		jobContextJson?: string,
+		jobsContextJson?: string,
+		stepsContextJson?: string,
+		runnerContextJson?: string,
+		secretsContextJson?: string,
+		strategyContextJson?: string,
+		matrixContextJson?: string,
+		needsContextJson?: string,
+		inputsContextJson?: string,
+	): Promise<ActionsSandbox3> {
+		const nonBlankArgNames = ["repoOwner", "repoName", "apiBaseUrl"] as const;
+
+		for (const argName of nonBlankArgNames) {
+			if (argName && isBlank(argName)) {
+				throw new Error(msg.invalid[argName]);
+			}
+		}
+
+		const githubContext = githubContextJson
+			? (JSON.parse(githubContextJson) as PartialGithubContext)
+			: undefined;
+		const computedApiBaseUrl = apiBaseUrl ?? githubContext?.api_url;
+
+		let computedRepoOwner = repoOwner ?? githubContext?.repository_owner;
+		let computedRepoName =
+			repoName ?? githubContext?.repository.split("/")?.[1];
+
+		if (!computedRepoOwner || !computedRepoName) {
+			console.info(msg.missing.repoOwnerOrName);
+
+			const remoteUrl = await this.getRemoteUrl();
+			const remoteUrlSegments = remoteUrl.split("/");
+
+			computedRepoOwner = computedRepoOwner ?? remoteUrlSegments[3];
+			computedRepoName =
+				computedRepoName ?? remoteUrlSegments[4].replace(".git", "");
+		}
+
+		const repoRequestProps = {
+			owner: computedRepoOwner,
+			repo: computedRepoName,
+		};
+		const api = new Octokit({
+			userAgent: base.userAgent,
+			...(computedApiBaseUrl && { baseUrl: computedApiBaseUrl }),
+			...(this.token && { auth: this.token }),
+		}).rest;
+		const ghKey = base.nunjucksContextMetadataKey.github.base;
+		const ghRepoKey = `${ghKey}.${base.nunjucksContextMetadataKey.github.repository}`;
+
+		// Fetch additional repo/owner data from the GitHub API and add it to the Nunjucks context
+		const ghDataMatrix: GithubDataPromiseMatrix = [
+			[api.repos.get(repoRequestProps), ghRepoKey],
+			[getLatestRelease(api, repoRequestProps), `${ghRepoKey}.latestRelease`],
+			[
+				api.repos.checkPrivateVulnerabilityReporting(repoRequestProps),
+				`${ghRepoKey}.vulRepEnabled`,
+				"enabled",
+			],
+			[
+				api.users.getByUsername({
+					username: computedRepoOwner,
+				}),
+				`${ghRepoKey}.owner`,
+			],
+		];
+
+		await Promise.all(
+			ghDataMatrix.map(async ([responsePromise, outputKey, inputKey]) => {
+				const response = await responsePromise;
+
+				this.addToNunjucksContext(response.data, outputKey, inputKey);
+			}),
+		);
+
+		const ghContextKey = `${ghKey}.${base.nunjucksContextMetadataKey.github.context}`;
+
+		// Add contextual information from GitHub Actions to the Nunjucks context
+		const contextMatrix: GithubContextMatrix = [
+			[`${ghContextKey}.github`, githubContextJson],
+			[`${ghContextKey}.env`, envContextJson],
+			[`${ghContextKey}.vars`, varsContextJson],
+			[`${ghContextKey}.job`, jobContextJson],
+			[`${ghContextKey}.jobs`, jobsContextJson],
+			[`${ghContextKey}.steps`, stepsContextJson],
+			[`${ghContextKey}.runner`, runnerContextJson],
+			[`${ghContextKey}.secrets`, secretsContextJson],
+			[`${ghContextKey}.strategy`, strategyContextJson],
+			[`${ghContextKey}.matrix`, matrixContextJson],
+			[`${ghContextKey}.needs`, needsContextJson],
+			[`${ghContextKey}.inputs`, inputsContextJson],
+		];
+
+		for (const [outputKey, contextJson] of contextMatrix) {
+			if (contextJson) {
+				this.addToNunjucksContext(JSON.parse(contextJson), outputKey);
+			}
+		}
+
+		return this;
+	}
+
+	@func()
+	public async buildDocs(...withPaths: string[]): Promise<Directory> {
+		// Parse path inputs
+		const pathMaps = withPaths;
+		const pathsMatrix: InputPathMatrix = pathMaps.map((pathMapString) => {
+			const [templatePath, outputPath] = pathMapString.split(":", 2);
+
+			if (!templatePath || !outputPath) {
+				throw new Error(msg.invalid.pathMap(pathMapString));
+			}
+
+			console.info(msg.valid.pathMap(templatePath, outputPath));
+
+			return [templatePath, outputPath];
+		});
+
+		if (pathsMatrix.length === 0) {
+			throw new Error(msg.missing.base("pathMap", msg.missing.pathMap));
+		}
+
+		let container = this.getBaseContainer();
+
+		// Mount default templates directory if provided
+		if (this.defaultTemplatesDir) {
+			container = container.withDirectory(
+				dir.defaultTemplates,
+				this.defaultTemplatesDir,
+			);
+		} else {
+			console.warn(msg.missing.defaultTemplates);
+		}
+
+		this.setNunjucksEnv(container);
+
+		// Render templates
+		const outputPromiseMatrix: OutputPromiseMatrix = pathsMatrix.map(
+			async ([templatePath, outputPath]) =>
+				[
+					outputPath,
+					await this.renderTemplate(join(dir.source, templatePath)),
+				] as const,
+		);
+		const outputMatrix = await Promise.all(outputPromiseMatrix);
+
+		// Save rendered templates to output directory
+		for (const [outputPath, outputContent] of outputMatrix) {
+			container = container.withNewFile(
+				join(dir.build, outputPath),
+				outputContent,
+			);
+		}
+
+		return container.directory(dir.build);
+	}
+
+	@func()
+	public withCommitConfig(
+		authorName?: string,
+		authorEmail?: string,
+		committerName?: string,
+		committerEmail?: string,
+		message?: string,
+	): ActionsSandbox3 {
+		if (authorName) this.gitAuthorName = authorName;
+		if (authorEmail) this.gitAuthorEmail = authorEmail;
+		if (committerName) this.gitCommitterName = committerName;
+		if (committerEmail) this.gitCommitterEmail = committerEmail;
+		if (message) this.gitCommitMessage = message;
+
+		return this;
+	}
+
+	@func()
+	public async buildAndCommitDocs(): Promise<string> {
+		const buildDir = this.buildDocs();
+
+		return this.commitChanges(await buildDir);
+	}
+
+	@func()
+	public async commitChanges(buildDir: Directory): Promise<string> {
+		const container = this.getBaseContainerWithGit().withDirectory(
+			dir.source,
+			buildDir,
+		);
+
+		const isGitDirOutput = await trim(
+			container
+				.withExec([
+					"git",
+					"rev-parse",
+					"--is-inside-work-tree",
+					"--",
+					"2>/dev/null",
+				])
+				.stdout(),
+		);
+
+		if (isGitDirOutput !== "true") {
+			throw new Error(msg.invalid.sourceDir);
+		}
+
+		const currentBranch = await trim(
+			container.withExec(["git", "branch", "--show-current"]).stdout(),
+		);
+
+		if (!currentBranch) {
+			throw new Error(msg.invalid.currentBranch);
+		}
+
+		if (!isDefined(this.token)) {
+			throw new Error(msg.missing.token);
+		}
+
+		const remoteUrl = await this.getRemoteUrl();
+		const computedRemoteUrl = remoteUrl.replace(
+			"://",
+			`://${this.token.plaintext()}`,
+		);
+
+		return (
+			container
+				.withExec(["git", "add", "."])
+				.with((container) => this.commit(container))
+				.withExec([
+					"git",
+					"push",
+					// `https://${githubToken.plaintext()}@github.com/${repository}.git`,
+				 computedRemoteUrl,
+				])
+				.terminal()
+				.stdout()
+		);
+		// .withExec(["git", "status"])
+		// .terminal()
+	}
+
+	@func()
+	public getBaseContainerWithGit(): Container {
+		return this.getBaseContainer()
+			.withWorkdir(dir.source)
+			.withExec(["apk", "add", "git"]);
+	}
+
+	@func()
+	public getBaseContainer(): Container {
+		if (!isDefined(this.sourceDir)) {
+			throw new Error(msg.missing.sourceDir);
+		}
+
+		return dag
+			.container()
+			.from(base.image)
+			.withWorkdir(dir.working)
+			.withDirectory(dir.source, this.sourceDir);
+	}
+}
