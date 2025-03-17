@@ -20,7 +20,7 @@ import { base, dir, msg } from "./constants";
 import type {
 	GithubContextMatrix,
 	GithubDataPromiseMatrix,
-	InputPathMatrix,
+	InputPathsMatrix,
 	NestedObject,
 	Nullable,
 	OutputPromiseMatrix,
@@ -309,7 +309,7 @@ export class ActionsSandbox3 {
 	public async buildDocs(...withPaths: string[]): Promise<Directory> {
 		// Parse path inputs
 		const pathMaps = withPaths;
-		const pathsMatrix: InputPathMatrix = pathMaps.map((pathMapString) => {
+		const pathsMatrix: InputPathsMatrix = pathMaps.map((pathMapString) => {
 			const [templatePath, outputPath] = pathMapString.split(":", 2);
 
 			if (!templatePath || !outputPath) {
@@ -378,8 +378,8 @@ export class ActionsSandbox3 {
 	}
 
 	@func()
-	public async buildAndCommitDocs(): Promise<string> {
-		const buildDir = this.buildDocs();
+	public async buildAndCommitDocs(...withPaths: string[]): Promise<string> {
+		const buildDir = this.buildDocs(...withPaths);
 
 		return this.commitChanges(await buildDir);
 	}

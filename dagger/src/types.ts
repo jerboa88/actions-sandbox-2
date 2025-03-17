@@ -1,4 +1,4 @@
-import type { OctokitResponse } from "@octokit/types";
+import type { OctokitResponse } from '@octokit/types';
 
 export type Nullable<T> = T | null;
 
@@ -25,7 +25,7 @@ export type GithubContextMatrix = [
 	contextJson: Optional<string>,
 ][];
 
-export type InputPathMatrix = [templatePath: string, outputPath: string][];
+export type InputPathsMatrix = [templatePath: string, outputPath: string][];
 
 export type OutputPromiseMatrix = Promise<
 	readonly [outputPath: string, outputContentPromise: string]
