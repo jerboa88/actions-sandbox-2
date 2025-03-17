@@ -258,10 +258,11 @@ export class ActionsSandbox3 {
 			owner: computedRepoOwner,
 			repo: computedRepoName,
 		};
+
 		const api = new Octokit({
 			userAgent: base.userAgent,
 			...(computedApiBaseUrl && { baseUrl: computedApiBaseUrl }),
-			...(this.token && { auth: this.token }),
+			...(this.token && { auth: await this.token.plaintext() }),
 		}).rest;
 		const ghKey = base.nunjucksContextMetadataKey.github.base;
 		const ghRepoKey = `${ghKey}.${base.nunjucksContextMetadataKey.github.repository}`;
