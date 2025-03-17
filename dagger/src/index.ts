@@ -212,6 +212,18 @@ export class ActionsSandbox3 {
 		matrixContextJson?: string,
 		needsContextJson?: string,
 		inputsContextJson?: string,
+		githubContextSecret?: Secret,
+		envContextSecret?: Secret,
+		varsContextSecret?: Secret,
+		jobContextSecret?: Secret,
+		jobsContextSecret?: Secret,
+		stepsContextSecret?: Secret,
+		runnerContextSecret?: Secret,
+		secretsContextSecret?: Secret,
+		strategyContextSecret?: Secret,
+		matrixContextSecret?: Secret,
+		needsContextSecret?: Secret,
+		inputsContextSecret?: Secret,
 	): Promise<ActionsSandbox3> {
 		const nonBlankArgNames = ["repoOwner", "repoName", "apiBaseUrl"] as const;
 
@@ -221,8 +233,9 @@ export class ActionsSandbox3 {
 			}
 		}
 
-		const githubContext = githubContextJson
-			? (JSON.parse(githubContextJson) as PartialGithubContext)
+		const computedGithubContextJson = githubContextJson ?? await githubContextSecret?.plaintext();
+		const githubContext = computedGithubContextJson
+			? (JSON.parse(computedGithubContextJson) as PartialGithubContext)
 			: undefined;
 		const computedApiBaseUrl = apiBaseUrl ?? githubContext?.api_url;
 
@@ -282,18 +295,18 @@ export class ActionsSandbox3 {
 
 		// Add contextual information from GitHub Actions to the Nunjucks context
 		const contextMatrix: GithubContextMatrix = [
-			[`${ghContextKey}.github`, githubContextJson],
-			[`${ghContextKey}.env`, envContextJson],
-			[`${ghContextKey}.vars`, varsContextJson],
-			[`${ghContextKey}.job`, jobContextJson],
-			[`${ghContextKey}.jobs`, jobsContextJson],
-			[`${ghContextKey}.steps`, stepsContextJson],
-			[`${ghContextKey}.runner`, runnerContextJson],
-			[`${ghContextKey}.secrets`, secretsContextJson],
-			[`${ghContextKey}.strategy`, strategyContextJson],
-			[`${ghContextKey}.matrix`, matrixContextJson],
-			[`${ghContextKey}.needs`, needsContextJson],
-			[`${ghContextKey}.inputs`, inputsContextJson],
+			[`${ghContextKey}.github`, githubContextJson ?? await githubContextSecret?.plaintext()],
+			[`${ghContextKey}.env`, envContextJson ?? await envContextSecret?.plaintext()],
+			[`${ghContextKey}.vars`, varsContextJson ?? await varsContextSecret?.plaintext()],
+			[`${ghContextKey}.job`, jobContextJson ?? await jobContextSecret?.plaintext()],
+			[`${ghContextKey}.jobs`, jobsContextJson ?? await jobsContextSecret?.plaintext()],
+			[`${ghContextKey}.steps`, stepsContextJson ?? await stepsContextSecret?.plaintext()],
+			[`${ghContextKey}.runner`, runnerContextJson ?? await runnerContextSecret?.plaintext()],
+			[`${ghContextKey}.secrets`, secretsContextJson ?? await secretsContextSecret?.plaintext()],
+			[`${ghContextKey}.strategy`, strategyContextJson ?? await strategyContextSecret?.plaintext()],
+			[`${ghContextKey}.matrix`, matrixContextJson ?? await matrixContextSecret?.plaintext()],
+			[`${ghContextKey}.needs`, needsContextJson ?? await needsContextSecret?.plaintext()],
+			[`${ghContextKey}.inputs`, inputsContextJson ?? await inputsContextSecret?.plaintext()],
 		];
 
 		for (const [outputKey, contextJson] of contextMatrix) {
