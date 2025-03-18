@@ -81,10 +81,14 @@ export class ActionsSandbox3 {
 		outputKey?: string,
 		inputKey?: string,
 	) {
-		nunjucksContext = _merge(
+		const mergedObj = _merge(
 			nunjucksContext,
 			reshapeObject(obj, inputKey, outputKey),
 		);
+
+		nunjucksContext = mergedObj;
+
+		console.info(msg.valid.nunjucksContext(mergedObj));
 	}
 
 	private setNunjucksEnv(container: Container) {
