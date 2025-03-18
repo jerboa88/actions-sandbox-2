@@ -81,14 +81,12 @@ export class ActionsSandbox3 {
 		outputKey?: string,
 		inputKey?: string,
 	) {
-		const mergedObj = _merge(
+		nunjucksContext = _merge(
 			nunjucksContext,
 			reshapeObject(obj, inputKey, outputKey),
 		);
 
-		nunjucksContext = mergedObj;
-
-		console.info(msg.valid.nunjucksContext(mergedObj));
+		console.info(msg.info.nunjucksContextObjAdded(obj));
 	}
 
 	private setNunjucksEnv(container: Container) {
@@ -113,6 +111,8 @@ export class ActionsSandbox3 {
 		};
 
 		nunjucksEnv = new nunjucks.Environment(daggerLoader, nunjucksConfig);
+
+		console.info(msg.info.nunjucksEnvBuilt);
 	}
 
 	private async getRemoteUrl(): Promise<string> {
@@ -131,6 +131,8 @@ export class ActionsSandbox3 {
 					defaultTemplatesDir: dir.defaultTemplates,
 				},
 			});
+
+			console.info(msg.info.nunjucksTemplateRendering(templatePath, nunjucksContext));
 
 			nunjucksEnv.render(templatePath, nunjucksContext, (error, result) => {
 				if (error) {
@@ -342,7 +344,7 @@ export class ActionsSandbox3 {
 				throw new Error(msg.invalid.pathMap(pathMapString));
 			}
 
-			console.info(msg.valid.pathMap(templatePath, outputPath));
+			console.info(msg.info.pathMapFound(templatePath, outputPath));
 
 			return [templatePath, outputPath];
 		});

@@ -1,4 +1,4 @@
-import type { NestedObject } from './types';
+import type { NestedObject, Nullable } from './types';
 import { buildMissingPropMsg } from './utils';
 
 const moduleName = 'dojomentation';
@@ -57,10 +57,16 @@ export const msg = {
 		repoName: 'Repo name cannot be blank.',
 		apiBaseUrl: 'API base URL cannot be blank.',
 	},
-	valid: {
-		pathMap: (templatePath: string, outputPath: string) =>
+	info: {
+		pathMapFound: (templatePath: string, outputPath: string) =>
 			`Found path mapping: '${templatePath}' -> '${outputPath}'.`,
-		nunjucksContext: (obj: NestedObject) =>
-			`Nunjucks context updated with: ${JSON.stringify(obj, null, 2)}`,
+		nunjucksContextObjAdded: (obj: Nullable<NestedObject>) =>
+			`Added object to Nunjucks context: ${JSON.stringify(obj, null, 2)}`,
+		nunjucksEnvBuilt: 'Nunjucks environment built',
+		nunjucksTemplateRendering: (
+			templatePath: string,
+			nunjucksContext: Nullable<NestedObject>,
+		) =>
+			`Rendering template '${templatePath}' with Nunjucks context: ${JSON.stringify(nunjucksContext, null, 2)}`,
 	},
 };
