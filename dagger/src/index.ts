@@ -44,11 +44,6 @@ export class ActionsSandbox3 {
 	private defaultTemplatesDir?: Directory;
 	private token?: Secret;
 	private nunjucksContextMetadataKey = base.nunjucksContextMetadataKey.metadata;
-	private gitCommitterName = base.git.committerName;
-	private gitCommitterEmail = base.git.committerEmail;
-	private gitAuthorName = base.git.authorName;
-	private gitAuthorEmail = base.git.authorEmail;
-	private gitCommitMessage = base.git.commitMessage;
 
 	constructor(
 		sourceDir: Directory,
@@ -124,32 +119,6 @@ export class ActionsSandbox3 {
 		);
 	}
 
-	private commit(container: Container): Container {
-		return container
-			.withExec([
-				"git",
-				"config",
-				"--global",
-				"user.name",
-				this.gitCommitterName,
-			])
-			.withExec([
-				"git",
-				"config",
-				"--global",
-				"user.email",
-				this.gitCommitterEmail,
-			])
-			.withExec([
-				"git",
-				"commit",
-				"--author",
-				`${this.gitAuthorName} <${this.gitAuthorEmail}>`,
-				"-m",
-				this.gitCommitMessage,
-			]);
-	}
-
 	private async renderTemplate(templatePath: string): Promise<string> {
 		return new Promise((resolve, reject) => {
 			this.addToNunjucksContext({
@@ -175,6 +144,7 @@ export class ActionsSandbox3 {
 		outputKey?: string,
 		dataUrl?: string,
 		dataFile?: File,
+		dataSecret?: Secret,
 		dataJson?: string,
 	): Promise<ActionsSandbox3> {
 		if (dataUrl || dataFile || dataJson) {
@@ -182,6 +152,7 @@ export class ActionsSandbox3 {
 				...(dataFile && JSON.parse(await dataFile.contents())),
 				...(dataUrl &&
 					JSON.parse(await fetch(dataUrl).then((response) => response.text()))),
+				...(dataSecret && JSON.parse(await dataSecret.plaintext())),
 				...(dataJson && JSON.parse(dataJson)),
 			};
 
@@ -233,7 +204,8 @@ export class ActionsSandbox3 {
 			}
 		}
 
-		const computedGithubContextJson = githubContextJson ?? await githubContextSecret?.plaintext();
+		const computedGithubContextJson =
+			githubContextJson ?? (await githubContextSecret?.plaintext());
 		const githubContext = computedGithubContextJson
 			? (JSON.parse(computedGithubContextJson) as PartialGithubContext)
 			: undefined;
@@ -296,18 +268,54 @@ export class ActionsSandbox3 {
 
 		// Add contextual information from GitHub Actions to the Nunjucks context
 		const contextMatrix: GithubContextMatrix = [
-			[`${ghContextKey}.github`, githubContextJson ?? await githubContextSecret?.plaintext()],
-			[`${ghContextKey}.env`, envContextJson ?? await envContextSecret?.plaintext()],
-			[`${ghContextKey}.vars`, varsContextJson ?? await varsContextSecret?.plaintext()],
-			[`${ghContextKey}.job`, jobContextJson ?? await jobContextSecret?.plaintext()],
-			[`${ghContextKey}.jobs`, jobsContextJson ?? await jobsContextSecret?.plaintext()],
-			[`${ghContextKey}.steps`, stepsContextJson ?? await stepsContextSecret?.plaintext()],
-			[`${ghContextKey}.runner`, runnerContextJson ?? await runnerContextSecret?.plaintext()],
-			[`${ghContextKey}.secrets`, secretsContextJson ?? await secretsContextSecret?.plaintext()],
-			[`${ghContextKey}.strategy`, strategyContextJson ?? await strategyContextSecret?.plaintext()],
-			[`${ghContextKey}.matrix`, matrixContextJson ?? await matrixContextSecret?.plaintext()],
-			[`${ghContextKey}.needs`, needsContextJson ?? await needsContextSecret?.plaintext()],
-			[`${ghContextKey}.inputs`, inputsContextJson ?? await inputsContextSecret?.plaintext()],
+			[
+				`${ghContextKey}.github`,
+				githubContextJson ?? (await githubContextSecret?.plaintext()),
+			],
+			[
+				`${ghContextKey}.env`,
+				envContextJson ?? (await envContextSecret?.plaintext()),
+			],
+			[
+				`${ghContextKey}.vars`,
+				varsContextJson ?? (await varsContextSecret?.plaintext()),
+			],
+			[
+				`${ghContextKey}.job`,
+				jobContextJson ?? (await jobContextSecret?.plaintext()),
+			],
+			[
+				`${ghContextKey}.jobs`,
+				jobsContextJson ?? (await jobsContextSecret?.plaintext()),
+			],
+			[
+				`${ghContextKey}.steps`,
+				stepsContextJson ?? (await stepsContextSecret?.plaintext()),
+			],
+			[
+				`${ghContextKey}.runner`,
+				runnerContextJson ?? (await runnerContextSecret?.plaintext()),
+			],
+			[
+				`${ghContextKey}.secrets`,
+				secretsContextJson ?? (await secretsContextSecret?.plaintext()),
+			],
+			[
+				`${ghContextKey}.strategy`,
+				strategyContextJson ?? (await strategyContextSecret?.plaintext()),
+			],
+			[
+				`${ghContextKey}.matrix`,
+				matrixContextJson ?? (await matrixContextSecret?.plaintext()),
+			],
+			[
+				`${ghContextKey}.needs`,
+				needsContextJson ?? (await needsContextSecret?.plaintext()),
+			],
+			[
+				`${ghContextKey}.inputs`,
+				inputsContextJson ?? (await inputsContextSecret?.plaintext()),
+			],
 		];
 
 		for (const [outputKey, contextJson] of contextMatrix) {
@@ -372,88 +380,6 @@ export class ActionsSandbox3 {
 		}
 
 		return container.directory(dir.build);
-	}
-
-	@func()
-	public withCommitConfig(
-		authorName?: string,
-		authorEmail?: string,
-		committerName?: string,
-		committerEmail?: string,
-		message?: string,
-	): ActionsSandbox3 {
-		if (authorName) this.gitAuthorName = authorName;
-		if (authorEmail) this.gitAuthorEmail = authorEmail;
-		if (committerName) this.gitCommitterName = committerName;
-		if (committerEmail) this.gitCommitterEmail = committerEmail;
-		if (message) this.gitCommitMessage = message;
-
-		return this;
-	}
-
-	@func()
-	public async buildAndCommitDocs(...withPaths: string[]): Promise<string> {
-		const buildDir = this.buildDocs(...withPaths);
-
-		return this.commitChanges(await buildDir);
-	}
-
-	@func()
-	public async commitChanges(buildDir: Directory): Promise<string> {
-		const container = this.getBaseContainerWithGit().withDirectory(
-			dir.source,
-			buildDir,
-		);
-
-		const isGitDirOutput = await trim(
-			container
-				.withExec([
-					"git",
-					"rev-parse",
-					"--is-inside-work-tree",
-					"--",
-					"2>/dev/null",
-				])
-				.stdout(),
-		);
-
-		if (isGitDirOutput !== "true") {
-			throw new Error(msg.invalid.sourceDir);
-		}
-
-		const currentBranch = await trim(
-			container.withExec(["git", "branch", "--show-current"]).stdout(),
-		);
-
-		if (!currentBranch) {
-			throw new Error(msg.invalid.currentBranch);
-		}
-
-		if (!isDefined(this.token)) {
-			throw new Error(msg.missing.token);
-		}
-
-		const remoteUrl = await this.getRemoteUrl();
-		const computedRemoteUrl = remoteUrl.replace(
-			"://",
-			`://${this.token.plaintext()}`,
-		);
-
-		return (
-			container
-				.withExec(["git", "add", "."])
-				.with((container) => this.commit(container))
-				.withExec([
-					"git",
-					"push",
-					// `https://${githubToken.plaintext()}@github.com/${repository}.git`,
-				 computedRemoteUrl,
-				])
-				.terminal()
-				.stdout()
-		);
-		// .withExec(["git", "status"])
-		// .terminal()
 	}
 
 	@func()

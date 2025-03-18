@@ -1,7 +1,7 @@
-import type { Octokit } from "@octokit/rest";
-import { get as _get, set as _set } from "lodash-es";
-import { msg } from "./constants";
-import type { NestedObject, Nullable, Optional } from "./types";
+import type { Octokit } from '@octokit/rest';
+import { get as _get, set as _set } from 'lodash-es';
+import { msg } from './constants';
+import type { NestedObject, Nullable } from './types';
 
 export function isDefined<T>(value: T | undefined): value is T {
 	return value !== undefined && value !== null;
@@ -17,7 +17,7 @@ export async function trim(
 	return (await strPromise).trim();
 }
 
-export function buildMissingPropMsg(propertyName: string, additionalMsg = "") {
+export function buildMissingPropMsg(propertyName: string, additionalMsg = '') {
 	return `Required property "${propertyName}" is missing. ${additionalMsg}`;
 }
 
@@ -46,7 +46,7 @@ export function reshapeObject(
 }
 
 export async function getLatestRelease(
-	api: InstanceType<typeof Octokit>["rest"],
+	api: InstanceType<typeof Octokit>['rest'],
 	params: {
 		owner: string;
 		repo: string;
